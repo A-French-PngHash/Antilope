@@ -1,7 +1,8 @@
 import numpy as np
 from matplotlib import path
 from matplotlib import pyplot as plt
-from gpx_decoder import Trace
+
+from .gpx_decoder import Trace
 
 class ClaimFinder():
     """
@@ -10,6 +11,7 @@ class ClaimFinder():
 
     _polygons = [] # List of np.array(N, 2) that holds every closed loop inside the trace
     _segments = [] # List of np.array(M, 2) that holds every segment in the trace.
+    
 
     def __init__(self, trace : Trace):
         self.trace = trace
@@ -43,23 +45,23 @@ class ClaimFinder():
         maxx, minx = np.int64(np.ceil(poly[:, 0].max())), np.int64(np.floor(poly[:,0].min()))
         maxy, miny = np.int64(np.ceil(poly[:, 1].max())), np.int64(np.floor(poly[:, 1].min()))
         # Checks every point in the square with top left (maxx, maxy) and bottom right (minx, miny)
-        x = np.linspace(minx, maxx, num=1 + maxx - minx)
-        y = np.linspace(miny, maxy, num=1 + maxy - miny)
+        x = np.arange(minx, maxx)
+        y = np.arange(miny, maxy)
 
         xx, yy = np.meshgrid(x, y) 
         points = np.stack((xx, yy), axis=2)
         m, n = points.shape[0], points.shape[1]
         points = points.reshape((n* m, 2))
-        result = self._point_inpoly(poly, points)
+        result = points[self._point_inpoly(poly, points)]
+
         if display:
             plt.pcolormesh(x, y, result.reshape(m, n), cmap = "Blues")
             
             plt.plot(*poly.transpose(), color="red")
             plt.axis([minx-5, maxx+5, miny-5, maxy+5])
             plt.show()
-        # TODO : Remove the results where points = False
-        print(result)
-        return result
+
+        return np.unique(result, axis= 0) # Unique here should not be needed as we a priori have no redondency, however just to be sure.
 
 
     def get_points_alongside_route(self,path, display=False):
@@ -93,8 +95,18 @@ class ClaimFinder():
             plt.show()
 
         return np.unique(points, axis=0)
+        
     
-
-trace = Trace.from_gpx("antilope_backend/api/logic/test_file/activity_20978283261.gpx")
-claim_finder = ClaimFinder(trace)
-claim_finder.get_inside_points(claim_finder.trace.points)
+    def find_all_tiles_to_claim(self):
+        """
+        Returns a np.array containing all the tiles to claim in the supplied trace.
+        """
+        # First apply the algorithm to populate `polygon` and `segments`
+        tiles = []
+        for poly in self.polygons_:
+            tiles.append(self.get_inside_points(poly))
+        for segment in self._segments:
+            tiles.append(self.get_points_alongside_route(segment))
+        
+        return np.unique(np.concatenate(tiles))
+    

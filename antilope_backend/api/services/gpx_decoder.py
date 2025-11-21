@@ -62,6 +62,3 @@ class Trace:
     
     def __repr__(self):
         return "object Trace(points=" + str(self.points) + ")"
-
-trace = Trace.from_gpx("antilope_backend/api/logic/test_file/activity_20978283261.gpx")
-print(trace)

@@ -5,7 +5,8 @@ from matplotlib import path
 from matplotlib import pyplot as plt
 class Trace:
     """
-    Holds a trace in planar coordinate.
+    Holds a trace in planar coordinate. 
+    WARNING : The coordinates are stored at dimension min_res which means (1, 1) is actually (min_res, min_res)
     """
     
     points : np.array

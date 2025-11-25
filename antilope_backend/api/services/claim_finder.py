@@ -12,10 +12,65 @@ class ClaimFinder():
     _polygons = [] # List of np.array(N, 2) that holds every closed loop inside the trace
     _segments = [] # List of np.array(M, 2) that holds every segment in the trace.
     
+    _EPSILON = 3
 
     def __init__(self, trace : Trace):
         self.trace = trace
 
+
+    def _pg_pol(self, liste,point, tol):
+        """ 
+        Return the indices of the points of `liste` which are at a distance < `tol` of `point` """
+        d1=liste[:]-point
+        d2=(d1[:]*d1[:]).sum(1)
+        tested = d2<tol
+        filtered = np.nonzero(tested)
+        return filtered[0]
+
+
+    def separe(self, list_points:np.array):
+        """
+        Converts latitude and longitude coordinates to plane (x, y) coordinates.
+        Return:
+            Array of (bool,array[points])
+                bool:true means that array[points] is a cycle, false means it is a paths 
+        """
+        def dist(a,b):
+            d=a-b
+            return (d*d).sum(0)
+        TOL=20 / self.trace.min_res # Distance under which points are considered the same.
+        TOL = TOL * TOL # Because we will be comparing squared distances.
+        if(dist(list_points[0],list_points[-1])<TOL):
+            return [(True,list_points)]
+        segmented=[]
+        last_cut=0
+        current_point=0
+        while current_point<list_points.shape[0]:
+
+            # Finding where to stop searching : 
+            # We search points from [first point where dist(current_point) > TOL, last point]
+            
+            left = current_point + 1 # Interval we will be searching is [left:]
+            
+            while (left < list_points.shape[0] and 
+                TOL > np.square((list_points[left]- list_points[current_point]).flatten()).sum()):
+                left += 1
+
+            if left == list_points.shape[0]: # Every point in [current_point:] is at distance less than TOL of current_point. Therefore, there is no cycle in this interval.
+                break
+
+
+            s = self._pg_pol(list_points[left:],list_points[current_point], TOL)
+            if(s.size!=0):
+                segmented.append((False,list_points[last_cut:current_point]))
+                segmented.append((True,list_points[current_point:(s[-1]+left+1)]))
+                current_point=left + s[-1] + 1
+                last_cut=current_point
+            else:
+                current_point+=1
+        if(last_cut<list_points.shape[0]):
+            segmented.append((False,list_points[last_cut:]))
+        return segmented
     
     def _point_inpoly(self, poly, points):
         """ 
@@ -33,7 +88,7 @@ class ClaimFinder():
         return p.contains_points(points)
 
 
-    def get_inside_points(self, poly, display = False):
+    def get_inside_tiles(self, poly, display = False):
         """
         Returns an exhaustive list of point (in planar coordinates) that are located inside the polygon.
 
@@ -64,12 +119,13 @@ class ClaimFinder():
         return np.unique(result, axis= 0) # Unique here should not be needed as we a priori have no redondency, however just to be sure.
 
 
-    def get_points_alongside_route(self,path, display=False):
+    def get_tiles_alongside_route(self,path, display=False):
         """ 
         When a run does not form a closed loop, some segments of it are just straight lines. 
         Alongside those straight lines, the runner should claim surounding tile (in a ~100m = 2 * min_res radius)
         
         We will asume that there is at least a point every ~50m = min_res.
+
         :param path: List of points in planar coordinates describing the route taken by the user.
         :param display: If set to True, will display a map showing the claimed tiles.
         """
@@ -95,18 +151,30 @@ class ClaimFinder():
             plt.show()
 
         return np.unique(points, axis=0)
-        
+    
+    def _populate_polygons_segments(self):
+        """ 
+        Populates this class `_polygons` and `_segments` variable.
+        """
+        output = self.separe(self.trace.points)
+        for i in output:
+            if i[0]:
+                self._polygons.append(i[1])
+            else:
+                self._segments.append(i[1])
+
     
     def find_all_tiles_to_claim(self):
         """
-        Returns a np.array containing all the tiles to claim in the supplied trace.
+        Returns a np.array containing all the tiles to claim in the trace obeject supplied at __init__.
         """
         # First apply the algorithm to populate `polygon` and `segments`
+        self._populate_polygons_segments()
         tiles = []
         for poly in self.polygons_:
-            tiles.append(self.get_inside_points(poly))
+            tiles.append(self.get_inside_tiles(poly))
         for segment in self._segments:
-            tiles.append(self.get_points_alongside_route(segment))
+            tiles.append(self.get_tiles_alongside_route(segment))
         
         return np.unique(np.concatenate(tiles))
     

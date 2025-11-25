@@ -3,7 +3,10 @@ import numpy as np
 from .gpx_decoder import Trace
 from .claim_finder import ClaimFinder
 class ClaimFinderTestCase(TestCase):
-    # given when then scheme
+    """
+    Unit testing class that tests the ClaimFinder class.
+    
+    Run using: `python manage.py test` (do not mix up with the `testing` command which is just arbitrary code execution)"""
     def setUp(self):
         pass
 

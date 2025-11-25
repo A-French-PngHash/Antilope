@@ -3,6 +3,7 @@ import numpy as np
 import gpxpy.gpx
 from matplotlib import path
 from matplotlib import pyplot as plt
+
 class Trace:
     """
     Holds a trace in planar coordinate. 
@@ -10,7 +11,7 @@ class Trace:
     """
     
     points : np.array
-    min_res = 50
+    res = 50 # Resolution to use for the tiles
 
     def __init__(self, points : np.array):
         """ 
@@ -23,7 +24,8 @@ class Trace:
         """
         Reads a .gpx file and returns a Trace object with the points that are in the GPX.
         
-        :param path: Path to access the file.
+        :param file_path: Path to access the file.
+
         :returns: np.array of dim (N, 2)
         """
         gpx_file = open(file_path, 'r')
@@ -35,7 +37,6 @@ class Trace:
             for segment in track.segments:
                 print(segment)
                 for point in segment.points:
-                    #print(f'Point at ({point.latitude},{point.longitude}) -> {point.elevation}')
                     path_points.append((point.latitude, point.longitude))
 
         path_points = np.array(path_points, dtype=float)
@@ -54,7 +55,7 @@ class Trace:
 
         :param cords: Numpy array of shape (N, 2).
         """
-        x_be = 4921.2020759 * 50
+        x_be = 4921.2020759 * 50 # The BE coordinates were initialy computed with a /50 factor
         y_be = 124516.36854561 * 50
         R = 6378000
         x = np.pi * R * cords[:, 1] / 180 - x_be

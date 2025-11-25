@@ -11,8 +11,7 @@ class ClaimFinder():
 
     _polygons = [] # List of np.array(N, 2) that holds every closed loop inside the trace
     _segments = [] # List of np.array(M, 2) that holds every segment in the trace.
-    
-    _EPSILON = 3
+    _same_point = 20 # Distance under which points are considered the 'same'.
 
     def __init__(self, trace : Trace):
         self.trace = trace
@@ -38,7 +37,7 @@ class ClaimFinder():
         def dist(a,b):
             d=a-b
             return (d*d).sum(0)
-        TOL=20 / self.trace.min_res # Distance under which points are considered the same.
+        TOL=self._same_point / self.trace.min_res # Distance under which points are considered the same.
         TOL = TOL * TOL # Because we will be comparing squared distances.
         if(dist(list_points[0],list_points[-1])<TOL):
             return [(True,list_points)]

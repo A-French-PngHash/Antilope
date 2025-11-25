@@ -5,6 +5,11 @@ from pathlib import Path
 from django.conf import settings
 
 class Command(BaseCommand):
+    """ 
+    This creates a piece of code that can be run with : python manage.py testing.
+
+    When executing this command, the code inside handle is launched. The benefit of launching code like that is that we have an access to the database.
+    """
     help = 'Closes the specified poll for voting'
 
     def add_arguments(self, parser):

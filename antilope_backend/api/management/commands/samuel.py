@@ -4,8 +4,6 @@ from api.services import *
 from pathlib import Path
 from django.conf import settings
 import time
-from datetime import datetime, timezone
-from api.services.tile_pusher import *
 
 class Command(BaseCommand):
     """ 
@@ -19,13 +17,15 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        trace = Trace.from_gpx(str(settings.BASE_DIR) + "/api/services/test_gpx_file/activity_20978283261.gpx")
+        trace = Trace.from_gpx(str(settings.BASE_DIR) + "/api/services/test_gpx_file/bouclevelo.gpx")
         claim_finder = ClaimFinder(trace)
+        print("starting", flush=True)
+        now = time.time()
         tiles = claim_finder.get_all_tiles_to_claim()
-        user = User.objects.get(name="Titou")#.filter(surname="Titou")
-        activity = Activity(user=user, filename="testing", date_added = datetime.now(timezone.utc))
-        activity.save()
-        #print(tiles)
-        insert_tiles(user, activity, tiles)
-        #claim_finder.display_tiles_and_trace(tiles)
+        then = time.time()
+        print(then - now)
+        #user = User.objects.get(name="Titou")#.filter(surname="Titou")
+        
+        print(tiles)
+        claim_finder.display_tiles_and_trace(tiles)
         

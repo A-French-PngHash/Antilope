@@ -20,6 +20,10 @@ class Tile(models.Model):
     nb_passage = models.IntegerField()
     x = models.IntegerField() # Tile location is (n, m) with n and m integers
     y = models.IntegerField()
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["x", "y"], name="unique_tile_xy")
+        ]
 
 class Activity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

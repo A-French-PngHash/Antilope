@@ -19,7 +19,8 @@ class ClaimFinder():
 
     def _pg_pol(self, liste,point, tol):
         """ 
-        Return the indices of the points of `liste` which are at a distance < `tol` of `point` """
+        Return the indices of the points of `liste` which are at a distance < `tol` of `point` 
+        """
         d1=liste[:]-point
         d2=(d1[:]*d1[:]).sum(1)
         tested = d2<tol

@@ -40,7 +40,7 @@ class Trace:
                     path_points.append((point.latitude, point.longitude))
 
         path_points = np.array(path_points, dtype=float)
-        path_xy = Trace.gps_to_xy(path_points, Trace.min_res)
+        path_xy = Trace.gps_to_xy(path_points, Trace.res)
         return Trace(path_xy)
 
     @classmethod

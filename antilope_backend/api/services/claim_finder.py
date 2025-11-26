@@ -10,7 +10,7 @@ class ClaimFinder():
     """
 
     _polygons = [] # List of np.array(N, 2) that holds every closed loop inside the trace
-    _segments = [] # List of np.array(M, 2) that holds every segment in the trace.
+    #_segments = [] # List of np.array(M, 2) that holds every segment in the trace.
     _same_point = 20 # Distance under which points are considered the 'same'.
 
     def __init__(self, trace : Trace):
@@ -37,7 +37,7 @@ class ClaimFinder():
         def dist(a,b):
             d=a-b
             return (d*d).sum(0)
-        TOL=self._same_point / self.trace.min_res # Distance under which points are considered the same.
+        TOL=self._same_point / self.trace.res # Distance under which points are considered the same.
         TOL = TOL * TOL # Because we will be comparing squared distances.
         if(dist(list_points[0],list_points[-1])<TOL):
             return [(True,list_points)]
@@ -121,9 +121,9 @@ class ClaimFinder():
     def get_tiles_alongside_route(self,path, display=False):
         """ 
         When a run does not form a closed loop, some segments of it are just straight lines. 
-        Alongside those straight lines, the runner should claim surounding tile (in a ~100m = 2 * min_res radius)
+        Alongside those straight lines, the runner should claim surounding tile (in a ~100m = 2 * res radius)
         
-        We will asume that there is at least a point every ~50m = min_res.
+        We will asume that there is at least a point every ~50m = res.
 
         :param path: List of points in planar coordinates describing the route taken by the user.
         :param display: If set to True, will display a map showing the claimed tiles.
@@ -149,7 +149,33 @@ class ClaimFinder():
             plt.plot(*path.transpose(), color="red")
             plt.show()
 
-        return np.unique(points, axis=0)
+        return np.unique(points.astype(np.int64), axis=0)
+    
+    def display_tiles_and_trace(self, tiles):
+        """
+        Plots the `self.trace` with the supplied `tiles` in a different color in the background.
+        
+        :param self: Description
+        :param tiles: Tiles to display as claimed. np.array of shape (N, 2)
+        """
+        path = self.trace.points
+        window = 5
+        xmin, xmax = np.floor(np.min(path[:, 0])) - window, np.ceil(np.max(path[:, 0])) + window
+        ymin, ymax = np.floor(np.min(path[:, 1])) - window, np.ceil(np.max(path[:, 1])) + window
+        x = np.arange(xmin, xmax+1)
+        y = np.arange(ymin, ymax+1)
+        xx, yy = np.meshgrid(x, y) 
+        grid = np.column_stack((xx.ravel(), yy.ravel())) # better use ravel : makes no copy (flatten makes a copy)
+
+        selected_tiles = {tuple(p) for p in tiles}
+        result = np.array([1 if tuple(p) in selected_tiles else 0 for p in grid])
+        
+        plt.pcolormesh(x, y, result.reshape(y.shape[0],x.shape[0]), cmap = "Blues")#, shading='flat')
+        plt.gca().set_aspect('equal')
+        plt.plot(*path.transpose(), color="red")
+        plt.show()
+
+
     
     def _populate_polygons_segments(self):
         """ 
@@ -159,21 +185,21 @@ class ClaimFinder():
         for i in output:
             if i[0]:
                 self._polygons.append(i[1])
-            else:
-                self._segments.append(i[1])
+            #else:
+                #self._segments.append(i[1])
 
     
-    def find_all_tiles_to_claim(self):
+    def get_all_tiles_to_claim(self):
         """
         Returns a np.array containing all the tiles to claim in the trace obeject supplied at __init__.
         """
         # First apply the algorithm to populate `polygon` and `segments`
         self._populate_polygons_segments()
         tiles = []
-        for poly in self.polygons_:
+        for poly in self._polygons:
             tiles.append(self.get_inside_tiles(poly))
-        for segment in self._segments:
-            tiles.append(self.get_tiles_alongside_route(segment))
-        
-        return np.unique(np.concatenate(tiles))
+        #for segment in self._segments:
+            #tiles.append(self.get_tiles_alongside_route(segment))
+        tiles.append(self.get_tiles_alongside_route(self.trace.points))
+        return np.unique(np.concatenate(tiles, axis=0), axis=0)
     

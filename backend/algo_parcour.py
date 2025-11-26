@@ -3,21 +3,28 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 def get_intersect_squares_from_segment(segment):
+    """
+    Trouve l'intersection du segment avec les tiles
+    """
     def y(x):
         return segment[1][1]*((x-segment[0][0])/(segment[1][0]-segment[0][0]))+segment[0][1]*((x-segment[1][0])/(segment[0][0]-segment[1][0]))
+    #On trouve les intersection avec lignes demi-entière en x et on calcul leurs y
     xmin, xmax = np.min(segment[:, 0]), np.max(segment[:, 0])
     intersect_x = np.arange(np.floor(xmin+.5)+.5,np.ceil(xmax-.5)+.5,1)
     intersect_x = np.append(intersect_x,xmax)
     intersect_x = np.insert(intersect_x,0,xmin)
     intersect_x_interval= np.stack((intersect_x[:-1],intersect_x[1:]),axis=1)
     intersect_y_interval=y(intersect_x_interval)
+    #Comble un intervalle en y
     def fill (y):
         ymin,ymax=np.floor(np.min(y,0)-.5)+.5,np.floor(np.max(y,0)-.5)+.5
         print(y,ymin,ymax)
         return np.arange(ymin,ymax+1,1)
+    #On trouve la case à laquelle correspond le segment de deux x et on combine avec la liste en y
     def pair_with_x(x,y):
-        a= [[np.floor(x[1]),np.ceil(j)] for j in y]
+        a= [[np.round((x[1]+x[0])*.5),np.ceil(j)] for j in y]
         return a
+    #On assemble tout
     a= np.concatenate([ pair_with_x(intersect_x_interval[i],fill(intersect_y_interval[i])) for i in range(intersect_x_interval.shape[0])])
     return a
 
@@ -52,6 +59,12 @@ def get_points_alongside_route(path : np.array, display):
         plt.show()
 
     return np.unique(points, axis=0)
+
+def get_bouding_box(tiles):
+    """
+    Renvoie la boite englobante la liste des tiles
+    """
+    return np.array([np.min(tiles,0)-[1,1],np.max(tiles,0)+[1,1]])
 
 if __name__=="__main__":
     #get_points_alongside_route(np.array([[0.4,0.4],[2.4,3.4]]),display=True)

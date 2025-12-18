@@ -1,2 +1,5 @@
 gpxpy
 django-cas-ng
+django-tailwind
+djangorestframework
+django-leaflet

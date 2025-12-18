@@ -19,6 +19,17 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
+		//Centre sur notre position
+		function center_on_navigator_position(pos){
+			console.log(pos.coords.latitude,pos.coords.longitude)
+			map.flyTo(new L.LatLng(pos.coords.latitude, pos.coords.longitude),15)
+		}
+		function center_on_self(){
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(center_on_navigator_position);
+			}
+		}
+		center_on_self();
     });
 </script>
 {% endblock %}

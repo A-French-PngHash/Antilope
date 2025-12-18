@@ -1,15 +1,15 @@
 
 # Créer un nouveau projet avec Django : 
-python -m django startproject antilope_backend
+python -m django startproject antilope
 
-Crée un dossier antilope_backend/antilope_backend
+Crée un dossier antilope/antilope
 
 # Créer une application dans le projet Django
 
 On lance le fichier manage.py : 
 python manage.py startapp api
 
-Crée alors le dossier antilope_backend/api
+Crée alors le dossier antilope/api
 
 # Configurer la base de donnée
 

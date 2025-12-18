@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/**
+  * A catch-all path to Django template files, JavaScript, and Python files
+  * that contain Tailwind CSS classes and will be scanned by Tailwind to generate the final CSS file.
+  *
+  * If your final CSS file is not being updated after code changes, you may want to broaden or narrow
+  * the scope of this path.
+  */
+@source "../../../**/*.{html,py,js}";
+
+@theme {
+  /* Couleur personnalisée */
+  --color-primary-50: oklch(0.9694 0.0152 12.42);
+  /* "#fff1f2" */
+  --color-primary-100: oklch(0.9414 0.0298 12.58);
+  /* "#ffe4e6" */
+  --color-primary-200: oklch(0.8924 0.0559 10);
+  /* "#fecdd3" */
+  --color-primary-300: oklch(0.8097 0.1061 11.64);
+  /* "#fda4af" */
+  --color-primary-400: oklch(0.7192 0.169 13.43);
+  /* "#fb7185" */
+  --color-primary-500: oklch(0.645 0.2154 16.44);
+  /* "#f43f5e" */
+  --color-primary-600: oklch(0.5858 0.222 17.58);
+  /* "#e11d48" */
+  --color-primary-700: oklch(0.5143 0.1978 16.93);
+  /* "#be123c" */
+  --color-primary-800: oklch(0.4546 0.1713 13.7);
+  /* "#9f1239" */
+  --color-primary-900: oklch(0.4103 0.1502 10.27);
+  /* "#881337" */
+  --color-primary-950: oklch(0.2708 0.1009 12.09);
+  /* "#4c0519" */
+}
+
+@layer components {
+  .page-title {
+    @apply text-xl font-bold tracking-tight md:text-2xl;
+  }
+
+  .page-subtitle {
+    @apply text-sm font-normal tracking-tight md:text-lg;
+  }
+
+  .lien-menu-mobile {
+    @apply block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-primary-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700;
+  }
+
+  .field-form-select {
+    @apply bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+  }
+
+  .submit-button {
+    @apply w-full text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800;
+  }
+}

@@ -1,0 +1,52 @@
+{% load static %}
+{% load static tailwind_tags %}
+{% load leaflet_tags %}
+
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Antilope</title>
+    {% tailwind_css %}
+    {% leaflet_js %}
+    {% leaflet_css %}
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900">
+
+    <div class=" flex flex-col h-screen justify-between">
+        <header
+            class="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800 dark:border-gray-700 shadow dark:border-b">
+            <div class=" relative flex justify-center items-center">
+                <img src="{% static 'images/favicon-196.png' %}" class="mr-3 h-9 inline" alt="" />
+                <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white sm:inline">
+                    Antilope
+                </span>
+                {% if user.is_authenticated %}
+                <div class="absolute right-[20px]">
+                    <a href="{% url 'cas-logout' %}" class="lien-menu-mobile">
+                        Log Out</a>
+                </div>
+                {% endif %}
+            </div>
+
+        </header>
+        <main class="flex-1 bg-gray-50 justify-center ">
+
+            <div class="max-w-screen-xl text-gray-900 dark:text-white space-y-4 md:space-y-6">
+
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+
+</html>

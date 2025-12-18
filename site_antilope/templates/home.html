@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+<!-- Authenticated page. -->
+
+{% block content %}
+<div class="grid grid-cols-5 gap-3">
+    <div class="flex-1 justify-center ">Test</div>
+    <div class="bg-red-100 col-span-4">
+        <div id="map" style="height:400px;"></div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const map = L.map("map").setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+    });
+</script>
+{% endblock %}

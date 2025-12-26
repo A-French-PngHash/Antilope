@@ -14,22 +14,88 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const map = L.map("map").setView([0, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(map);
-		//Centre sur notre position
-		function center_on_navigator_position(pos){
-			console.log(pos.coords.latitude,pos.coords.longitude)
-			map.flyTo(new L.LatLng(pos.coords.latitude, pos.coords.longitude),15)
-		}
-		function center_on_self(){
-			if (navigator.geolocation) {
-				navigator.geolocation.getCurrentPosition(center_on_navigator_position);
+
+class TileLoader{
+	constructor(allies, axes, map) {
+		/*
+		Build a Tile Loader for a group against another one.
+
+		allies : str
+		axes : str
+		map : leaflet map
+		*/
+
+		// It's the allies group against the axes.
+		this.allies = allies;
+		this.axes = axes;
+		this.loadedTiles = new Map();
+		this.loadingSize = 128; // Size of the squares when requesting the API.
+		this.map = map;
+		this.res = 50; // Default res used in backend. Something should be done to make it so that there is no hard coded value there.
+	}
+
+	gps_to_xy(lat, long) {
+        let x_be = 246060.103795;
+        let y_be = 6225818.4272805;
+        let R = 6378000; // earth radius
+        let x = Math.PI * R * long / 180 - x_be;
+        let y = R * Math.log(Math.tan(1/4 * Math.PI + Math.PI * 1/2 * lat / 180)) - y_be;
+		let output = [+((x / this.res).toFixed(2)), +((y / this.res).toFixed(2))];
+		return output;
+	}
+
+
+
+	loadTerrain(topRight, bottomLeft) {
+		/*
+		Loads (api) and display (leaflet) every tile in the given zone. Does not reload already loaded sectors.
+		
+		topRight : [number, number],
+		bottomLeft : [number, number],
+		*/
+		topLeft = this.gps_to_xy(...topLeft);
+		bottomRight = this.gps_to_xy(...bottomRight);
+		topLeft = [Math.floor(topLeft[0] / this.loadingSize), Math.ceil(topLeft[1] / this.loadingSize)]
+		bottomRight = [Math.ceil(bottomRight[0] / this.loadingSize), Math.floor(bottomRight[1] / this.loadingSize)]
+		for (let x = topLeft[0]; i < bottomRight[0]; i++) {
+			for (let y = bottomRight[1]; y < topLeft[1]; i++) {
+				if (!this.map.has([x, y])) {
+					fetch("$URL/api/get_tiles",
+						{method : "GET",
+							body: JSON
+								.stringify
+								({
+								topLeft: topLeft,
+								group : this.allies,
+								bottomRight: bottomRight,
+								}),
+							headers: {
+							"Content-type": "application/json",
+							},
+						}
+					)
+				}
 			}
 		}
-		center_on_self();
+	}
+}
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const map = L.map("map").setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,               
+        }).addTo(map);
+		map.setView(new L.LatLng(48.713770, 2.210537), 15) // Center on polytechnique.
+
+		tileLoad = new TileLoader("raid24", "raid23", map)
+
+		let radiusMts = 5500;
+		let bounds = L.latLng(48.751535, 2.303532).toBounds(radiusMts); 
+		//L.rectangle(bounds).addTo(map);
+		L.rectangle(bounds, {color: "#ff7800", weight: 1}).addTo(map);
+
+		console.log("hello world");
     });
 </script>
 {% endblock %}

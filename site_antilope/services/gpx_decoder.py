@@ -55,8 +55,8 @@ class Trace:
 
         :param cords: Numpy array of shape (N, 2).
         """
-        x_be = 4921.2020759 * 50 # The BE coordinates were initialy computed with a /50 factor
-        y_be = 124516.36854561 * 50
+        x_be = 246060.103795
+        y_be = 6225818.4272805
         R = 6378000
         x = np.pi * R * cords[:, 1] / 180 - x_be
         y = R * np.log(np.tan(1/4 * np.pi + np.pi * 1/2 * cords[:, 0] / 180)) - y_be
@@ -64,3 +64,7 @@ class Trace:
     
     def __repr__(self):
         return "object Trace(points=" + str(self.points) + ")"
+
+print(__name__)
+if __name__ == "__main__":
+    print(Trace.gps_to_xy(np.array([[48.787917,1.980520]]), 50))

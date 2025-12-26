@@ -10,10 +10,10 @@ class UserSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         name, surname = validated_data["name"], validated_data["surname"]
-        user = User(name = validated_data["name"], surname = validated_data["surname"])
+        user = User(name = validated_data["name"], surname = validated_data["surname"], username = username)
         user.save()
-        print("saved")
-        groups = [f"{surname}.{name}"]
+        username = f"{surname}.{name}"
+        groups = [username]
         user.add_groups(groups)
         user.save()
         return user

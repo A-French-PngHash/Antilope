@@ -1,6 +1,6 @@
 import os
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 
 
 # Create your models here.
@@ -11,6 +11,10 @@ class User(AbstractUser):
     name = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
     ban = models.BooleanField(default=False)
+    username = models.CharField(max_length=100, unique=True)
+
+    USERNAME_FIELD="username"
+    REQUIRED_FIELDS = ["name", "surname"]
 
     def __str__(self):
         return self.surname + self.name

@@ -13,9 +13,25 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="pixi.min.js"></script>
+<script src="L.PixiOverlay.min.js"></script>
 <script>
 
 class TileLoader{
+	/*
+	Fetches the tiles with the api, and displays them on call of `loadTerrainOnMap`.
+
+	How does it works ? `loadTerrainOnMap` takes in gps coordinates which are converted to planar (x,y) 
+	the same way as in the backend. Queries to the backend will be done by blocks of 128*128 tiles
+	(from (0, 0) to (127, 127) for example). The `requestTileData` will do the call to the api and return
+	the tile data for the specified group using a Map. The (x,y) coordinates are then converted back to 
+	(lat, long) and the rectangle are plotted on the leaflet map.
+
+	I encountered a problem : the mercator projection does not keep distances, therefore, despite the res being 50,
+	the distance between (0,0) and (0, 1) is not 50 meters but 50 * cos(lat * pi / 180). Therefore, the closer one
+	is from the poles, the highest resolution the tiling will be.
+	*/
+
 	constructor(allies, axes, map) {
 		/*
 		Build a Tile Loader for a group against another one.
@@ -32,6 +48,11 @@ class TileLoader{
 		this.loadingSize = 128; // Size of the squares when requesting the API.
 		this.map = map;
 		this.res = 50; // Default res used in backend. Something should be done to make it so that there is no hard coded value there.
+		
+		this.csrftoken = this._getCookie('csrftoken');
+		this.pixiOverlay = L.pixiOverlay((utils) => {
+			// your drawing code here
+		}, new PIXI.Container());	
 	}
 
 	gps_to_xy(lat, long) {
@@ -44,40 +65,99 @@ class TileLoader{
 		return output;
 	}
 
+	xy_to_gps(x, y) {
+        let x_be = 246060.103795;
+        let y_be = 6225818.4272805;
+        let R = 6378000; // earth radius
+		let long = (x * this.res + x_be) * 180 / (Math.PI * R);
+		let lat = (Math.atan(Math.exp((y * this.res + y_be) / R)) - 1/4 * Math.PI) * 180 * 2 / Math.PI;
+		return [lat, long];
+	}
+	
+	_getCookie(name) {
+		let cookieValue = null;
+		if (document.cookie && document.cookie !== '') {
+			const cookies = document.cookie.split(';');
+			for (let i = 0; i < cookies.length; i++) {
+				const cookie = cookies[i].trim();
+				if (cookie.startsWith(name + '=')) {
+					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+					break;
+				}
+			}
+		}
+		return cookieValue;
+	}
+
+	async requestTileData(topLeft, bottomRight, group) {
+		let response = await (await fetch("tile",
+			{method : "POST",
+				body: JSON
+					.stringify
+					({
+					topleft: topLeft,
+					group : this.allies,
+					bottomright: bottomRight,
+					}),
+				headers: {
+					"X-CSRFToken": this.csrftoken,
+					"Content-Type": "application/json"
+				},
+			}
+		)).json();
+		let mapResponse = new Map();
+		response.forEach(element => {
+			mapResponse.set([element["x"], element["y"]], element["total_passage"])
+		});
+		return mapResponse;
+	}
 
 
-	loadTerrain(topRight, bottomLeft) {
+
+	async loadTerrainOnMap(topLeft, bottomRight) {
 		/*
 		Loads (api) and display (leaflet) every tile in the given zone. Does not reload already loaded sectors.
 		
-		topRight : [number, number],
-		bottomLeft : [number, number],
+		topRight : [number, number], gps coordinates
+		bottomLeft : [number, number], gps coordinates
 		*/
 		topLeft = this.gps_to_xy(...topLeft);
 		bottomRight = this.gps_to_xy(...bottomRight);
 		topLeft = [Math.floor(topLeft[0] / this.loadingSize), Math.ceil(topLeft[1] / this.loadingSize)]
 		bottomRight = [Math.ceil(bottomRight[0] / this.loadingSize), Math.floor(bottomRight[1] / this.loadingSize)]
-		for (let x = topLeft[0]; i < bottomRight[0]; i++) {
-			for (let y = bottomRight[1]; y < topLeft[1]; i++) {
-				if (!this.map.has([x, y])) {
-					fetch("$URL/api/get_tiles",
-						{method : "GET",
-							body: JSON
-								.stringify
-								({
-								topLeft: topLeft,
-								group : this.allies,
-								bottomRight: bottomRight,
-								}),
-							headers: {
-							"Content-type": "application/json",
-							},
+		
+		console.log("Loading tiles between : ")
+		console.log(topLeft);
+		console.log(bottomRight);
+		for (let x = topLeft[0]; x < bottomRight[0]; x++) {
+			for (let y = bottomRight[1]; y < topLeft[1]; y++) {
+				if (!this.loadedTiles.has([x, y])) {
+					let ally_tile = await this.requestTileData([x * this.loadingSize, (y+1) * this.loadingSize], [(x + 1) * this.loadingSize, y * this.loadingSize], this.allies);
+					let axe_tile = await this.requestTileData([x * this.loadingSize, (y+1) * this.loadingSize], [(x + 1) * this.loadingSize, y * this.loadingSize], this.axes);
+					console.log(ally_tile)
+					for (let [key, value] of  axe_tile.entries()) {
+						if (ally_tile.has(key)) {
+							ally_tile.set(key, ally_tile.has(key) - value)
+						} else {
+							ally_tile.set(key, -value);
 						}
-					)
+					}
+
+					for (let [key, value] of  ally_tile.entries()) { 
+						console.log(key);
+						let cords = this.xy_to_gps(...key);
+						let bounds = L.latLng(...cords).toBounds(this.res * Math.cos(cords[0] * Math.PI / 180)); 
+						L.rectangle(bounds, {color: "#FFBBB3", weight: 0, "fillOpacity": .3}).addTo(this.map);
+					}
+					this.loadedTiles.set([x, y], true)
+				} else {
+					console.log("found already loaded tiles : ");
+					console.log([x, y])
 				}
 			}
 		}
 	}
+
 }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -89,13 +169,9 @@ class TileLoader{
 		map.setView(new L.LatLng(48.713770, 2.210537), 15) // Center on polytechnique.
 
 		tileLoad = new TileLoader("raid24", "raid23", map)
-
-		let radiusMts = 5500;
-		let bounds = L.latLng(48.751535, 2.303532).toBounds(radiusMts); 
-		//L.rectangle(bounds).addTo(map);
-		L.rectangle(bounds, {color: "#ff7800", weight: 1}).addTo(map);
-
-		console.log("hello world");
+		tileLoad.loadTerrainOnMap([48.802389, 2.010850], [48.84235, 2.326020])
+		
+		console.log("ayy");
     });
 </script>
 {% endblock %}

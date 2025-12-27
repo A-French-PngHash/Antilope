@@ -20,13 +20,14 @@ def get_tile_data_inside(point1 : tuple[int, int],point2 : tuple[int, int], grou
         x__gte=point1[0],
         x__lte=point2[0],
         y__gte=point2[1],
-        y__lte=point1[0],
+        y__lte=point1[1],
     )
+
+    
     .filter(
         Q(user__group__group=group)
     )
     .values('x', 'y')
     .annotate(total_passage=Sum('nb_passage')))
-
     # Tiles is now a query set where each result is {'x': 0, 'y': 0, 'total_passage': 7}
     return tiles

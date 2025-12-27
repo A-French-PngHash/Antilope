@@ -41,11 +41,12 @@ def api_create_user(request):
     user = serializer.save()
     return Response({"id" : user.id})
 
-@api_view(['GET'])
+@api_view(['POST'])
 def api_get_tiles_data(request):
     serializer = TileDataRequestSerializer(data= request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
+    print(f"Getting tiles : {data["topleft"]} {data["bottomright"]}")
     tiles = get_tile_data_inside(data["topleft"], data["bottomright"], data["group"])
     return Response(tiles)
 

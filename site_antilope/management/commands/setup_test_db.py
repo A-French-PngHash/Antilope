@@ -18,29 +18,39 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
+        """
+        DELETE FROM site_antilope_tile;
+        DELETE FROM site_antilope_tileoperation;
+        DELETE FROM site_antilope_activity;
+        DELETE FROM site_antilope_user;
+        """
         try:
             alice = User.objects.get(username='alice.chaise')        
         except User.DoesNotExist:
+            print("creating alice")
             alice = User(name="alice", surname="chaise", username="alice.chaise")
             alice.save()
-            raid24 = Group(user=bob, group="raid24")
+            raid24 = Group(user=alice, group="raid24")
             raid24.save()
         
         try:
             bob = User.objects.get(username='bob.table')        
         except User.DoesNotExist:
+            print("creating bob")
             bob = User(name="bob", surname="table", username="bob.table")
-            raid23 = Group(user=alice, group = "raid23")
-            raid23.save()
+            raid23 = Group(user=bob, group = "raid23")
             bob.save()
+            raid23.save()
+        
+        
+        files = ["site_antilope/services/test_gpx_file/activity_21016356115.gpx", "site_antilope/services/test_gpx_file/bouclevelo.gpx"]
+        users = [bob, alice]
+        for i in range(len(files)):
 
-        print("opening file")
-
-        with open("site_antilope/services/test_gpx_file/bouclevelo.gpx") as f:
-            activity = Activity.objects.get(id=1)
+            activity = Activity.objects.get(id=i+3)
             print(activity)
-            trace = Trace.from_gpx("site_antilope/services/test_gpx_file/bouclevelo.gpx")
+            trace = Trace.from_gpx(files[i])
             claim_finder = ClaimFinder(trace)
-            print("claiming")
             claim_tiles(alice, activity, claim_finder.get_all_tiles_to_claim())
+        
         

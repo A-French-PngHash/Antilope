@@ -35,7 +35,6 @@ class Trace:
 
         for track in gpx.tracks:
             for segment in track.segments:
-                print(segment)
                 for point in segment.points:
                     path_points.append((point.latitude, point.longitude))
 
@@ -65,6 +64,5 @@ class Trace:
     def __repr__(self):
         return "object Trace(points=" + str(self.points) + ")"
 
-print(__name__)
 if __name__ == "__main__":
     print(Trace.gps_to_xy(np.array([[48.787917,1.980520]]), 50))

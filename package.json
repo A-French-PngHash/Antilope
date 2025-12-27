@@ -2,6 +2,7 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "envy": "^3.0.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "leaflet-pixi-overlay": "^1.9.5"
   }
 }
